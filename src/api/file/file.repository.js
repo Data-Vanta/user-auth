@@ -5,11 +5,6 @@ class FileRepository {
     return await File.create(fileData);
   }
 
-  /**
-   * Finds all files associated with a specific user.
-   * @param {string} userId - The UUID of the user.
-   * @returns {Promise<object[]>} A list of file objects.
-   */
   async findAllByUserId(userId) {
     return await File.findAll({ where: { userId } });
   }
@@ -20,6 +15,10 @@ class FileRepository {
 
   async deleteById(id) {
     return await File.destroy({ where: { id } });
+  }
+
+  async findByIdAndUserId(id, userId) {
+    return await File.findOne({ where: { id, userId } });
   }
 }
 
