@@ -29,79 +29,11 @@ For errors:
 }
 ```
 
----
-
-## API Endpoints
-
-### Auth
-
-| Method | Endpoint                       | Description                        | Auth Required | Roles         |
-|--------|------------------------------- |------------------------------------|-------------- |-------------- |
-| POST   | `/api/v1/auth/signup`          | Register a new user                | No           | -             |
-| POST   | `/api/v1/auth/signin`          | Login and get JWT token            | No           | -             |
-| GET    | `/api/v1/auth/verify-email`    | Verify email via token             | No           | -             |
-| POST   | `/api/v1/auth/forget-password` | Send password reset email          | No           | -             |
-| GET    | `/api/v1/auth/reset-password`  | Show reset password form (EJS)     | No           | -             |
-| POST   | `/api/v1/auth/change-password` | Change password via reset token    | No           | -             |
-
-### User Management
-
-| Method | Endpoint                | Description           | Auth Required | Roles         |
-|--------|------------------------ |---------------------- |-------------- |-------------- |
-| GET    | `/api/v1/user/`         | Get all users         | Yes           | Admin         |
-| GET    | `/api/v1/user/:id`      | Get user by ID        | Yes           | Admin, User   |
-| PUT    | `/api/v1/user/:id`      | Update user           | Yes           | User          |
-| DELETE | `/api/v1/user/:id`      | Delete user           | Yes           | Admin, User   |
-
----
-
-## Example `.env` File
-
-```
-PORT=3000
-URL=http://localhost:3000
-NODE_ENV=development
-DB_STRING=postgres://postgres:1234@localhost:5432/user_auth
-DB_STRING_PROD=postgres://postgres:1234@localhost:5432/user_auth
-JWT_SECRET=your_jwt_secret
-EMAIL_USER=email@gmail.com
-APP_PASS=pass
-```
-
----
-
 ## Notes
 
 - Email verification and password reset links are sent via email and open EJS pages for user interaction.
 - All protected endpoints require a valid JWT token in the `Authorization` header as  'x-auth-token' : token.
 - Roles: `Admin`, `User` (with `isAdmin` boolean in user model).
-
----
-
-# user-auth
-
-🚀 A lightweight Node.js user authentication & authorization service using Express and Sequelize (Postgres). Built-in features: user signup/signin, email verification, password reset, JWT-based authentication, roles, permissions and many-to-many role-permission associations.
-
-This README contains everything you need to run, extend, and test the project locally (including seeding, association setup, API reference, example requests and troubleshooting tips).
-
----
-
-## Table of contents
-
-1. Quick start
-2. Configuration (.env)
-3. Available Scripts
-4. Architecture & key modules
-5. Database & models
-6. Seeding & verification scripts
-7. API Reference (short) — Auth, Users, Roles, Permissions, Teams, Profiles
-8. Typical Postman examples
-9. Troubleshooting
-10. Recommendations (migrations / tests)
-11. Contributing
-12. License
-
----
 
 ## 1) Quick start
 
