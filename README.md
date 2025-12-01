@@ -80,9 +80,13 @@ APP_PASS=pass
 
 # user-auth
 
-🚀 A lightweight Node.js user authentication & authorization service using Express and Sequelize (Postgres). Built-in features: user signup/signin, email verification, password reset, JWT-based authentication, roles, permissions and many-to-many role-permission associations.
+user-auth — authentication & authorization microservice
 
-This README contains everything you need to run, extend, and test the project locally (including seeding, association setup, API reference, example requests and troubleshooting tips).
+This project is a minimal, production-minded Node.js service that provides user authentication and role/permission based access control using Express and Sequelize (Postgres). It implements:
+- User signup / signin, email verification, password reset
+- JWT authentication and middleware to protect routes
+- Role and Permission models with many-to-many associations
+- Files and code structure following controller → service → repository → model
 
 ---
 
@@ -103,13 +107,13 @@ This README contains everything you need to run, extend, and test the project lo
 
 ---
 
-## 1) Quick start
+## Quick start
 
 Prerequisites
 - Node.js >= 18
 - Postgres instance accessible using a connection string in `.env`
 
-Clone and run locally
+1. Clone the repository and install dependencies:
 
 ```bash
 git clone <repo-url>
@@ -117,9 +121,9 @@ cd user-auth
 npm install
 ```
 
-Create `.env` at the project root (see section 2).
+2. Create and fill a `.env` file (see next section – DB_STRING and JWT_SECRET are required).
 
-Run the server:
+3. Start the server (development):
 
 ```bash
 npm start
@@ -129,9 +133,9 @@ While the app uses `sequelize.sync({ alter: true })` to create/update tables on 
 
 ---
 
-## 2) Configuration (.env)
+## Pre-test configuration (.env and DB)
 
-Create a `.env` file in the project root with the minimal values below (example values shown):
+Create a `.env` file in the project root with at minimum these values (example):
 
 ```env
 PORT=3000
@@ -144,15 +148,18 @@ EMAIL_USER=your@email.com
 APP_PASS=email-app-password
 ```
 
-The server reads `.env` automatically. Ensure the Postgres DB is running and reachable by the DB connection string.
+Make sure your Postgres server is running and reachable using the connection string. The app uses `sequelize` to manage connections.
 
 ---
 
-## 3) Available scripts
+## Pre-test & helper scripts
 
-- npm start — run server with nodemon (default entry `src/index.js`) as a dev convenience
-- npm run seed — run `src/seeds/seedRolesPermissions.js` to create sample roles and permissions and set associations
-- npm run check:associations — run `src/seeds/checkAssociations.js` smoke test to validate Role <-> Permission associations
+
+Common tasks you will run when preparing to test the application:
+
+- npm start — start the server (runs sequelize.sync by default)
+- npm run seed — create sample roles & permissions (Admin & User and example permissions)
+- npm run check:associations — quick smoke-check for Role <-> Permission linking
 
 Run scripts from the project root. Example:
 
@@ -161,23 +168,40 @@ npm run seed
 npm run check:associations
 ```
 
-Note: `npm run seed` expects the DB configured and available. If tables are missing, the seeder calls `sequelize.sync({ alter: true })` before seeding.
+The seed and check scripts call `sequelize.sync({ alter: true })` if tables are missing. This is convenient for local testing only.
 
 ---
 
-## 4) Architecture & key modules
+## Project structure (where to look)
 
-- Express-based routing in `src/api/`.
-- Sequelize for Postgres ORM in `src/config/database.js`.
-- Models: `src/api/{user,role,permission,team,profile}` each with model/service/repository/controller/route layers.
-- Middlewares: auth, role-based restrictions, validation, upload handling, async handlers and error handler.
-- Utilities: `src/utils/ApiResponse.js` for consistent JSON responses, `bcrypt.js`, `mailer.js`.
+Primary code locations:
+
+- Routes: `src/api/*/*.route.js`
+- Controllers: `src/api/*/*.controller.js`
+- Services: `src/api/*/*.service.js`
+- Repositories: `src/api/*/*.repository.js`
+- Models: `src/api/*/*.model.js`
+
+Configuration and runtime:
+
+- `src/config/database.js` — Sequelize connection
+- `src/index.js` — startup, model loader and sequelize.sync
+- `src/app.js` — Express initialization and middleware
 
 Typical flow: routes → controller → service → repository → model
 
 ---
 
-## 5) Database & models (overview)
+## Pre-test checklist (brief)
+
+Before testing endpoints:
+
+1. Create `.env` and set DB_STRING & JWT_SECRET.
+2. Start Postgres and ensure the DB is accessible.
+3. Run `npm start` once so `sequelize.sync({ alter: true })` can create tables, or run `npm run seed` to both sync and populate sample roles/permissions.
+4. Use `npm run check:associations` to verify Role ↔ Permission associations work.
+
+Use `psql` or your DB GUI to inspect created tables (`users`, `roles`, `permissions`, `rolepermissions`, ...).
 
 Important models and relationships:
 
@@ -203,199 +227,74 @@ The project currently loads the join model on startup to ensure associations are
 - Seed: `npm run seed` creates example permissions and roles and associates Admin with all permissions and User with `read:user`.
 - Smoke-check: `npm run check:associations` will create temporary resources and verify Role-Permission linking (useful to confirm association are functional in your DB/environment).
 
-If you see errors about missing tables (e.g., "relation \"rolepermissions\" does not exist"), ensure you have the DB configured and either start the server (which runs `sequelize.sync`) or run the seed script which also calls `sequelize.sync({ alter: true })`.
+If `rolepermissions` or other tables are missing, start the server or run the seeder. These scripts create tables in development mode.
 
 ---
 
-## 7) API reference (full)
+## API endpoints (compact)
 
-Base path: /api/v1
+Base path: `/api/v1`
 
-Important note on auth: protected endpoints require a valid JWT sent in the header `x-auth-token`. The middleware also enforces `isVerified === true` on the user and role restrictions (Admin/User) where applicable.
+Auth (public)
+- POST /auth/signup — register user. Body: { name, email, password }
+- POST /auth/signin — login. Body: { email, password } → returns token and sets `x-auth-token` header
+- GET /auth/verify-email?token=TOKEN — verify account (EJS render)
+- POST /auth/forget-password — request reset email. Body: { email }
+- GET /auth/reset-password?token=TOKEN — render reset form (EJS)
+- POST /auth/change-password?token=TOKEN — change via reset token. Body: { password }
 
----
+Users (protected)
+- GET /user/ — list users (Admin)
+- GET /user/:id — get user by id (Admin or self)
+- PUT /user/:id — update user (self)
+- DELETE /user/:id — delete (Admin or self)
 
-AUTH (public)
+Roles (admin)
+- POST /role — create role. Body: { name }
+- GET /role — list roles (includes permissions)
+- GET /role/:role_id — get role (includes permissions)
+- PUT /role/:role_id — update role
+- DELETE /role/:role_id — delete role
 
-- POST /api/v1/auth/signup
-  - Description: Register a new user and send verification email.
-  - Body (JSON): { "name": "string", "email": "string", "password": "string" }
-  - Response: created user (no token)
+Role permissions
+- POST /role/:role_id/permissions — attach single permission. Body: { perm_id }
+- POST /role/:role_id/permissions/bulk — attach multiple. Body: { perm_ids: [1,2] }
+- DELETE /role/:role_id/permissions/:perm_id — remove permission
 
-- POST /api/v1/auth/signin
-  - Description: Sign in and get a JWT token.
-  - Body (JSON): { "email": "string", "password": "string" }
-  - Response: { token, user } and token is also set in `x-auth-token` response header.
+Permissions (admin)
+- POST /permission — create permission. Body: { name }
+- GET /permission/:perm_id — get permission
+- PUT /permission/:perm_id — update permission
+- DELETE /permission/:perm_id — delete permission
 
-- GET /api/v1/auth/verify-email?token=TOKEN
-  - Description: Verify account using the emailed token; renders a confirmation EJS view (browser flow).
+Profile
+- POST /profile — create profile (body validated)
+- GET /profile/me — get own profile (auth)
+- GET /profile/:id — get profile (role-check applies)
+- POST /profile/:id — update profile (role-check applies)
+- PUT /profile/:id/password — change password
+- POST /profile/:id/profile-picture — upload picture
 
-- POST /api/v1/auth/forget-password
-  - Description: Request password reset email for the provided email address.
-  - Body: { "email": "string" }
+Team
+- POST /team — create team
+- GET /team — list teams
+- GET /team/:team_id — get single team (team_view check)
+- PUT /team/:team_id — update team (team_update check)
+- DELETE /team/:team_id — delete team (team_delete check)
 
-- GET /api/v1/auth/reset-password?token=TOKEN
-  - Description: Render password reset form (EJS page) for token.
+Team members
+- POST /team/:team_id/members — add member (member_add)
+- GET /team/:team_id/members — list members (team_view)
+- PUT /team/:team_id/members/:user_id/role — update member role (member_role_update)
+- DELETE /team/:team_id/members/:user_id — remove member (member_remove)
 
-- POST /api/v1/auth/change-password?token=TOKEN
-  - Description: Change password after reset. Body: { password: 'newpassword' }
-
----
-
-USERS (protected)
-
-- GET /api/v1/user/
-  - Description: List all users
-  - Auth: x-auth-token required — restricted to Admin
-
-- GET /api/v1/user/:id
-  - Description: Get user details by ID
-  - Auth: x-auth-token required — Admin or the user themselves (User) allowed
-
-- PUT /api/v1/user/:id
-  - Description: Update an existing user
-  - Auth: x-auth-token required — only the user themselves (User)
-  - Body: any of user's updatable fields (name, email, password, etc.)
-
-- DELETE /api/v1/user/:id
-  - Description: Delete a user
-  - Auth: x-auth-token required — Admin or the user themselves (User)
-
----
-
-ROLES (Admin by default)
-
-- POST /api/v1/role
-  - Description: Create a new role
-  - Auth: x-auth-token required — Admin
-  - Body: { name: 'string' }
-
-- GET /api/v1/role
-  - Description: List roles, each role includes its permissions (joined through RolePermission)
-  - Auth: x-auth-token required — Admin
-
-- GET /api/v1/role/:role_id
-  - Description: Get a role by ID (includes permissions)
-  - Auth: x-auth-token required — Admin
-
-- PUT /api/v1/role/:role_id
-  - Description: Update role name
-  - Auth: x-auth-token required — Admin
-  - Body: { name: 'string' }
-
-- DELETE /api/v1/role/:role_id
-  - Description: Delete a role
-  - Auth: x-auth-token required — Admin
-
-Role permissions management (Admin)
-
-- POST /api/v1/role/:role_id/permissions
-  - Description: Attach a single permission to a role
-  - Body: { "perm_id": <permission id> }
-
-- POST /api/v1/role/:role_id/permissions/bulk
-  - Description: Attach multiple permissions in one request
-  - Body: { "perm_ids": [1,2,3] }
-
-- DELETE /api/v1/role/:role_id/permissions/:perm_id
-  - Description: Remove a permission from a role
+Auth header reminder: protected routes require a valid JWT in `x-auth-token`. Auth middlewares also require `isVerified` user.
 
 ---
 
-PERMISSIONS (Admin)
+## Example requests (Postman / curl)
 
-- POST /api/v1/permission
-  - Description: Create a permission
-  - Body: { "name": "string" }
-
-- GET /api/v1/permission/:perm_id
-  - Description: Get permission by id
-
-- PUT /api/v1/permission/:perm_id
-  - Description: Update permission
-  - Body: { "name": "string" }
-
-- DELETE /api/v1/permission/:perm_id
-  - Description: Delete permission
-
----
-
-PROFILE
-
-- POST /api/v1/profile
-  - Description: Create user profile (or initial profile data)
-  - Body: validate with `createProfileSchema` found in `src/api/profile/profile.validation.js`
-
-- GET /api/v1/profile/me
-  - Description: Get current user's profile (authenticated)
-  - Auth: x-auth-token required
-
-- GET /api/v1/profile/:id
-  - Description: Get a user's profile by id (Admin or allowed role access controlled by roleCheck middleware)
-
-- POST /api/v1/profile/:id
-  - Description: Update profile by id (protected via roleCheck middleware)
-  - Body: validated by updateProfileSchema
-
-- DELETE /api/v1/profile/:id
-  - Description: Delete profile by id
-
-- PUT /api/v1/profile/:id/password
-  - Description: Change password for a user (roleCheck applies)
-  - Body: { password: '<new-password>' }
-
-- POST /api/v1/profile/:id/profile-picture
-  - Description: Upload profile picture; uses upload middleware and error handling
-
----
-
-TEAMS
-
-- POST /api/v1/team
-  - Description: Create a new team
-  - Body: validated by createTeamSchema
-
-- GET /api/v1/team
-  - Description: Get a list of teams
-
-- GET /api/v1/team/:team_id
-  - Description: Get a single team by id
-  - Authorization: uses `checkTeamPermission('team_view')`
-
-- PUT /api/v1/team/:team_id
-  - Description: Update team
-  - Authorization: `checkTeamPermission('team_update')`
-
-- DELETE /api/v1/team/:team_id
-  - Description: Delete team
-  - Authorization: `checkTeamPermission('team_delete')`
-
-Team membership endpoints
-
-- POST /api/v1/team/:team_id/members
-  - Description: Add a member to a team
-  - Authorization: `checkTeamPermission('member_add')`
-  - Body: validated by addMemberSchema
-
-- GET /api/v1/team/:team_id/members
-  - Description: List team members
-  - Authorization: `checkTeamPermission('team_view')`
-
-- PUT /api/v1/team/:team_id/members/:user_id/role
-  - Description: Update member role inside the team
-  - Authorization: `checkTeamPermission('member_role_update')`
-  - Body: validated by updateMemberRoleSchema
-
-- DELETE /api/v1/team/:team_id/members/:user_id
-  - Description: Remove member from team
-  - Authorization: `checkTeamPermission('member_remove')`
-
-
----
-
-## 8) Postman examples (quick)
-
-1. Sign in (get token)
+Sign in (get token)
 
 POST http://localhost:3000/api/v1/auth/signin
 Body:
@@ -424,13 +323,13 @@ Body:
 { "name": "Manager" }
 ```
 
-4. Add permission to role (single)
+Add permission to role (single)
 
 POST http://localhost:3000/api/v1/role/:role_id/permissions
 Headers: x-auth-token: <ADMIN_TOKEN>
 Body: { "perm_id": <ID> }
 
-5. Add permissions to role (bulk)
+Add permissions to role (bulk)
 
 POST http://localhost:3000/api/v1/role/:role_id/permissions/bulk
 Headers: x-auth-token: <ADMIN_TOKEN>
@@ -441,21 +340,24 @@ Body:
 
 ---
 
-## 9) Troubleshooting & common errors
+## Troubleshooting — quick
 
-- Sequelize DB connection issues: confirm `.env` `DB_STRING` is correct and DB is running.
-- Missing join table errors (e.g. "relation \"rolepermissions\" does not exist"): make sure you run the server or seeder so `sequelize.sync` creates tables. In dev you can run `npm start` (server runs sync) or `npm run seed` which calls `sync` before seeding.
-- "Permission is not associated to Role" eager-loading errors: ensure the join model is loaded before sync (this project requires `rolePermission.model` on startup). Restart the server after changing models.
-- JWT / auth errors: make sure the `x-auth-token` header contains a valid token; the user must be `isVerified` and have the required role for restricted routes.
+• DB connection failure — check `.env` and Postgres availability.
+• Missing tables — run server or `npm run seed` (dev only) to create them.
+• Eager-loading error (Permission is not associated to Role) — restart server; model loader ensures associations before sync.
+• Unauthorized / token expiry — use `x-auth-token` header with a current JWT; ensure user `isVerified`.
 
 ---
 
-## 10) Recommendations (production hardening)
+## Notes and next steps
 
-1. Replace `sequelize.sync({ alter: true })` with proper Sequelize migrations (`sequelize-cli`) for deterministic schema changes in production.
-2. Add integration tests for authentication, role/permission flows. Use a test DB and fixtures.
-3. Consider RBAC middleware to check not just role name but explicit permission checks (e.g., `can('create:user')`) for fine-grained control.
-4. Add rate-limiting and strong password policies for security.
+• For production: replace `sequelize.sync({ alter: true })` with Sequelize migrations and CI-driven schema deployments.
+• Add automated integration tests and a CI pipeline.
+• Use explicit permission checks (RBAC) where necessary.
+
+---
+
+If you want, I can generate a Postman collection and a lightweight OpenAPI (Swagger) spec next.
 
 ---
 
