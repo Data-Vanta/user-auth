@@ -56,6 +56,18 @@ class RoleRepository {
     return false;
   }
 
+  async addPermissionsToRole(role_id, perm_ids = []) {
+    const role = await this.findById(role_id);
+    const permissions = await Permission.findAll({ where: { perm_id: perm_ids } });
+
+    if (role && permissions && permissions.length === perm_ids.length) {
+      // Sequelize will create addPermissions for many-to-many relation
+      await role.addPermissions(permissions);
+      return true;
+    }
+    return false;
+  }
+
   async removePermissionFromRole(role_id, perm_id) {
     const role = await this.findById(role_id);
     const permission = await Permission.findByPk(perm_id);

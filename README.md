@@ -78,5 +78,32 @@ APP_PASS=secret app pass
 
 ---
 
+## Role / Permission setup (quick start)
+
+This repository uses Sequelize many-to-many associations between `Role` and `Permission` (through `RolePermission`). Models are defined in `src/api/role` and `src/api/permission` and associations are set up before the app syncs the database.
+
+To initialize roles, permissions and their associations quickly you can run the bundled seed script (this will create a small set of example permissions and assign them to `Admin` and `User` roles):
+
+```bash
+npm run seed
+```
+
+Or you can create entries via the API then attach permissions to a role:
+
+- Create permission: POST /api/v1/permission { "name": "read:user" }
+- Create role: POST /api/v1/role { "name": "Admin" }
+- Attach permission to role (single): POST /api/v1/role/:role_id/permissions { "perm_id": 1 }
+- Attach permissions to role (bulk): POST /api/v1/role/:role_id/permissions/bulk { "perm_ids": [1,2,3] }
+
+The database tables are created/updated using `sequelize.sync({ alter: true })` when the server starts — ensure your DB connection string is set in `.env` before starting.
+
+You can also run a small smoke-check to validate Role-Permission associations:
+
+```bash
+npm run check:associations
+```
+
+---
+
 Post Man 
 https://web.postman.co/workspace/My-Workspace~00d5889c-1530-4b97-8f69-9d29c12074d3/request/38134385-cb2a8fc8-2e4c-4cfe-a624-3495d9d7aa7d?action=share&source=copy-link&creator=38134385

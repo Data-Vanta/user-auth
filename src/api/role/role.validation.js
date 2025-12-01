@@ -12,4 +12,8 @@ const addPermissionSchema = Joi.object({
     perm_id: Joi.number().integer().required()
 });
 
-module.exports = { createRoleSchema, updateRoleSchema, addPermissionSchema };
+const addPermissionsSchema = Joi.object({
+    perm_ids: Joi.array().items(Joi.number().integer()).min(1).required()
+});
+
+module.exports = { createRoleSchema, updateRoleSchema, addPermissionSchema, addPermissionsSchema };

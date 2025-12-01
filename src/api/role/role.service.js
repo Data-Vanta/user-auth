@@ -23,6 +23,10 @@ class RoleService {
     return role;
   }
 
+  async getAllRoles() {
+    return await this.roleRepository.findAll();
+  }
+
   async updateRole(role_id, updateData) {
     if (updateData.name) {
       const existingRole = await this.roleRepository.findByName(updateData.name);
@@ -63,6 +67,28 @@ class RoleService {
     }
 
     return { message: "Permission added to role successfully" };
+  }
+
+  async addPermissionsToRole(role_id, perm_ids = []) {
+    const role = await this.roleRepository.findById(role_id);
+    if (!role) {
+      throw { statusCode: 404, message: "Role not found" };
+    }
+
+    // Verify all permissions exist
+    for (const id of perm_ids) {
+      const permission = await this.permissionRepository.findById(id);
+      if (!permission) {
+        throw { statusCode: 404, message: `Permission not found: ${id}` };
+      }
+    }
+
+    const added = await this.roleRepository.addPermissionsToRole(role_id, perm_ids);
+    if (!added) {
+      throw { statusCode: 500, message: "Failed to add permissions to role" };
+    }
+
+    return { message: "Permissions added to role successfully" };
   }
 
   async removePermissionFromRole(role_id, perm_id) {

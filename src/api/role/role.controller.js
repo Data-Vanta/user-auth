@@ -37,6 +37,13 @@ class RoleController {
         return success(res, result.message);
     });
 
+    addPermissionsToRole = asyncFun(async (req, res) => {
+        const { role_id } = req.params;
+        const { perm_ids } = req.body;
+        const result = await roleService.addPermissionsToRole(role_id, perm_ids);
+        return success(res, result.message);
+    });
+
     removePermissionFromRole = asyncFun(async (req, res) => {
         const { role_id, perm_id } = req.params;
         const result = await roleService.removePermissionFromRole(role_id, perm_id);
