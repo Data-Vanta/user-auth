@@ -6,7 +6,7 @@ const teamService = new TeamService();
 
 class TeamController {
     createTeam = asyncFun(async (req, res) => {
-        const team = await teamService.createTeam(req.body, req.user.id);
+        const team = await teamService.createTeam(req.body, req.user.id, req.params.ownerId);
         return success(res, "Team created successfully", team, 201);
     });
 
