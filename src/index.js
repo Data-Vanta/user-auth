@@ -13,6 +13,10 @@ process.on('uncaughtException', (err) => {
     process.exit(1);
 });
 
+// Ensure all model files are loaded so associations are registered before sync
+// load role/permission join model which sets up belongsToMany associations
+require('./api/role/rolePermission.model');
+
 // Sync database and start server
 sequelize.sync({ alter: true })
   .then(() => {
