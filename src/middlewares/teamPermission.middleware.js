@@ -26,7 +26,7 @@ exports.checkTeamPermission = (permission_name) => {
         const userPermissions = teamMember.role.Permissions || [];
         const hasPermission = userPermissions.some(perm => perm.name === permission_name);
         
-        if (!hasPermission || role.name !== 'Owner') {
+        if (!hasPermission) {
             return response.fail(res, `You don't have permission to ${permission_name}`, [], 403);
         }
 

@@ -14,6 +14,7 @@ class TeamRepository {
       include: [{
         model: User,
         as: 'members',
+        attributes: ['id', 'name', 'email', 'isVerified', 'isAdmin', 'role', 'createdAt', 'updatedAt'],
         through: { attributes: [] }
       }]
     });
@@ -24,6 +25,7 @@ class TeamRepository {
       include: [{
         model: User,
         as: 'members',
+        attributes: ['id', 'name', 'email', 'isVerified', 'isAdmin', 'role', 'createdAt', 'updatedAt'],
         through: { attributes: [] }
       }]
     });
@@ -41,12 +43,13 @@ class TeamRepository {
   }
 
   // Team Member methods
-  async addMember(team_id, user_id, role_name) {
-    const role = await Role.findOne({ where: { name: role_name } });
+  async addMember(team_id, user_id, role_id) {
+    // Verify role exists
+    const role = await Role.findByPk(role_id);
     if (!role) {
       throw { statusCode: 404, message: "Role not found" };
     }
-    return await TeamMember.create({ team_id, user_id, role_id: role.role_id });
+    return await TeamMember.create({ team_id, user_id, role_id });
   }
 
   async removeMember(team_id, user_id) {

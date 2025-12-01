@@ -12,7 +12,6 @@ async function seed() {
 
     const permissions = [
       'team_view',
-      'team_update',
       'team_delete',
       'member_add',
       'member_role_update',
