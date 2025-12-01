@@ -207,48 +207,189 @@ If you see errors about missing tables (e.g., "relation \"rolepermissions\" does
 
 ---
 
-## 7) API reference (short)
+## 7) API reference (full)
 
-The base path for all endpoints is `/api/v1`.
+Base path: /api/v1
 
-1) Auth (no auth required)
-  - POST /api/v1/auth/signup — create a new user (sends verification email)
-  - POST /api/v1/auth/signin — login; returns a JWT token and sets `x-auth-token` header
-  - GET /api/v1/auth/verify-email?token=TOKEN — verify account via email token
-  - POST /api/v1/auth/forget-password — send reset email
-  - GET /api/v1/auth/reset-password?token=TOKEN — render reset form
-  - POST /api/v1/auth/change-password?token=TOKEN — change password
+Important note on auth: protected endpoints require a valid JWT sent in the header `x-auth-token`. The middleware also enforces `isVerified === true` on the user and role restrictions (Admin/User) where applicable.
 
-2) Users (protected; Admin/User depending on endpoint)
-  - GET /api/v1/user/ — list users (Admin)
-  - GET /api/v1/user/:id — get by id (Admin + allowed user)
-  - PUT /api/v1/user/:id — update (User for own account)
-  - DELETE /api/v1/user/:id — delete (Admin + user)
+---
 
-3) Roles (Admin only by default — enforced by middleware)
-  - POST /api/v1/role — create role
-  - GET /api/v1/role — list roles (includes permissions)
-  - GET /api/v1/role/:role_id — get role (includes permissions)
-  - PUT /api/v1/role/:role_id — update role
-  - DELETE /api/v1/role/:role_id — delete role
+AUTH (public)
 
-  Role permission management:
-  - POST /api/v1/role/:role_id/permissions — attach single permission (body: { perm_id })
-  - POST /api/v1/role/:role_id/permissions/bulk — attach multiple (body: { perm_ids: [1,2] })
-  - DELETE /api/v1/role/:role_id/permissions/:perm_id — remove permission
+- POST /api/v1/auth/signup
+  - Description: Register a new user and send verification email.
+  - Body (JSON): { "name": "string", "email": "string", "password": "string" }
+  - Response: created user (no token)
 
-4) Permissions (Admin)
-  - POST /api/v1/permission — create permission
-  - GET /api/v1/permission/:perm_id — get permission
-  - PUT /api/v1/permission/:perm_id — update permission
-  - DELETE /api/v1/permission/:perm_id — delete permission
+- POST /api/v1/auth/signin
+  - Description: Sign in and get a JWT token.
+  - Body (JSON): { "email": "string", "password": "string" }
+  - Response: { token, user } and token is also set in `x-auth-token` response header.
 
-5) Profiles / Teams / Others
-  - See `src/api/profile`, `src/api/team` for endpoints and validations. They follow the same controller → service → repository pattern.
+- GET /api/v1/auth/verify-email?token=TOKEN
+  - Description: Verify account using the emailed token; renders a confirmation EJS view (browser flow).
 
-Auth & headers
-- The app uses JWTs; pass token in header `x-auth-token: <token>` when hitting protected endpoints.
-- Users must be `isVerified` to access protected routes.
+- POST /api/v1/auth/forget-password
+  - Description: Request password reset email for the provided email address.
+  - Body: { "email": "string" }
+
+- GET /api/v1/auth/reset-password?token=TOKEN
+  - Description: Render password reset form (EJS page) for token.
+
+- POST /api/v1/auth/change-password?token=TOKEN
+  - Description: Change password after reset. Body: { password: 'newpassword' }
+
+---
+
+USERS (protected)
+
+- GET /api/v1/user/
+  - Description: List all users
+  - Auth: x-auth-token required — restricted to Admin
+
+- GET /api/v1/user/:id
+  - Description: Get user details by ID
+  - Auth: x-auth-token required — Admin or the user themselves (User) allowed
+
+- PUT /api/v1/user/:id
+  - Description: Update an existing user
+  - Auth: x-auth-token required — only the user themselves (User)
+  - Body: any of user's updatable fields (name, email, password, etc.)
+
+- DELETE /api/v1/user/:id
+  - Description: Delete a user
+  - Auth: x-auth-token required — Admin or the user themselves (User)
+
+---
+
+ROLES (Admin by default)
+
+- POST /api/v1/role
+  - Description: Create a new role
+  - Auth: x-auth-token required — Admin
+  - Body: { name: 'string' }
+
+- GET /api/v1/role
+  - Description: List roles, each role includes its permissions (joined through RolePermission)
+  - Auth: x-auth-token required — Admin
+
+- GET /api/v1/role/:role_id
+  - Description: Get a role by ID (includes permissions)
+  - Auth: x-auth-token required — Admin
+
+- PUT /api/v1/role/:role_id
+  - Description: Update role name
+  - Auth: x-auth-token required — Admin
+  - Body: { name: 'string' }
+
+- DELETE /api/v1/role/:role_id
+  - Description: Delete a role
+  - Auth: x-auth-token required — Admin
+
+Role permissions management (Admin)
+
+- POST /api/v1/role/:role_id/permissions
+  - Description: Attach a single permission to a role
+  - Body: { "perm_id": <permission id> }
+
+- POST /api/v1/role/:role_id/permissions/bulk
+  - Description: Attach multiple permissions in one request
+  - Body: { "perm_ids": [1,2,3] }
+
+- DELETE /api/v1/role/:role_id/permissions/:perm_id
+  - Description: Remove a permission from a role
+
+---
+
+PERMISSIONS (Admin)
+
+- POST /api/v1/permission
+  - Description: Create a permission
+  - Body: { "name": "string" }
+
+- GET /api/v1/permission/:perm_id
+  - Description: Get permission by id
+
+- PUT /api/v1/permission/:perm_id
+  - Description: Update permission
+  - Body: { "name": "string" }
+
+- DELETE /api/v1/permission/:perm_id
+  - Description: Delete permission
+
+---
+
+PROFILE
+
+- POST /api/v1/profile
+  - Description: Create user profile (or initial profile data)
+  - Body: validate with `createProfileSchema` found in `src/api/profile/profile.validation.js`
+
+- GET /api/v1/profile/me
+  - Description: Get current user's profile (authenticated)
+  - Auth: x-auth-token required
+
+- GET /api/v1/profile/:id
+  - Description: Get a user's profile by id (Admin or allowed role access controlled by roleCheck middleware)
+
+- POST /api/v1/profile/:id
+  - Description: Update profile by id (protected via roleCheck middleware)
+  - Body: validated by updateProfileSchema
+
+- DELETE /api/v1/profile/:id
+  - Description: Delete profile by id
+
+- PUT /api/v1/profile/:id/password
+  - Description: Change password for a user (roleCheck applies)
+  - Body: { password: '<new-password>' }
+
+- POST /api/v1/profile/:id/profile-picture
+  - Description: Upload profile picture; uses upload middleware and error handling
+
+---
+
+TEAMS
+
+- POST /api/v1/team
+  - Description: Create a new team
+  - Body: validated by createTeamSchema
+
+- GET /api/v1/team
+  - Description: Get a list of teams
+
+- GET /api/v1/team/:team_id
+  - Description: Get a single team by id
+  - Authorization: uses `checkTeamPermission('team_view')`
+
+- PUT /api/v1/team/:team_id
+  - Description: Update team
+  - Authorization: `checkTeamPermission('team_update')`
+
+- DELETE /api/v1/team/:team_id
+  - Description: Delete team
+  - Authorization: `checkTeamPermission('team_delete')`
+
+Team membership endpoints
+
+- POST /api/v1/team/:team_id/members
+  - Description: Add a member to a team
+  - Authorization: `checkTeamPermission('member_add')`
+  - Body: validated by addMemberSchema
+
+- GET /api/v1/team/:team_id/members
+  - Description: List team members
+  - Authorization: `checkTeamPermission('team_view')`
+
+- PUT /api/v1/team/:team_id/members/:user_id/role
+  - Description: Update member role inside the team
+  - Authorization: `checkTeamPermission('member_role_update')`
+  - Body: validated by updateMemberRoleSchema
+
+- DELETE /api/v1/team/:team_id/members/:user_id
+  - Description: Remove member from team
+  - Authorization: `checkTeamPermission('member_remove')`
+
 
 ---
 
