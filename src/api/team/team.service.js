@@ -13,7 +13,7 @@ class TeamService {
     const team = await this.teamRepository.create(teamData);
 
     // Add creator as team member with default role (role_id = 1 for Owner)
-    await this.teamRepository.addMember(team.team_id, created_by, 1);
+    await this.teamRepository.addMember(team.team_id, created_by, "Owner");
     
     return await this.teamRepository.findById(team.team_id);
   }

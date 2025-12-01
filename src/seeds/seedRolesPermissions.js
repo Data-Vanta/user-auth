@@ -11,13 +11,12 @@ async function seed() {
     await sequelize.sync({ alter: true });
 
     const permissions = [
-      'create:user',
-      'read:user',
-      'update:user',
-      'delete:user',
-      'create:role',
-      'assign:role',
-      'read:role'
+      'team_view',
+      'team_update',
+      'team_delete',
+      'member_add',
+      'member_role_update',
+      'member_remove',
     ];
 
     const createdPerms = [];
@@ -27,17 +26,10 @@ async function seed() {
     }
 
     // Create roles
-    const [adminRole] = await Role.findOrCreate({ where: { name: 'Admin' } });
-    const [userRole] = await Role.findOrCreate({ where: { name: 'User' } });
+    const [ownerRole] = await Role.findOrCreate({ where: { name: 'Owner' } });
 
     // Assign all permissions to Admin
-    await adminRole.setPermissions(createdPerms);
-
-    // Assign read:user to User role
-    const readUserPerm = createdPerms.find(p => p.name === 'read:user');
-    if (readUserPerm) {
-      await userRole.setPermissions([readUserPerm]);
-    }
+    await ownerRole.setPermissions(createdPerms);
 
     console.log('Seeding complete: roles and permissions created and associated.');
     process.exit(0);
