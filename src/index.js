@@ -1,5 +1,5 @@
 const app = require('./app');
-const sequelize = require('./config/database');
+const { sequelize } = require('./db');
 const port = process.env.PORT || 3000;
 
 // Handle uncaught exceptions and rejections
@@ -20,7 +20,7 @@ require('./api/role/rolePermission.model');
 // Sync database and start server
 sequelize.sync({ alter: true })
   .then(() => {
-    console.log('Database & tables synced');
+    console.log('Database, tables, and associations synced');
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
     });
