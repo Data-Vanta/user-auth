@@ -132,12 +132,7 @@ Primary code layout
 2. Start Postgres and ensure the DB is accessible.
 If `rolepermissions` or other tables are missing, start the server or run the seeder — both call `sequelize.sync({ alter: true })` in development mode.
 4. Use `npm run check:associations` to verify Role ↔ Permission associations work.
-- POST /auth/signup — register user. Body: { name, email, password }
-- POST /auth/signin — login. Body: { email, password } → returns token and sets `x-auth-token` header
-- GET /auth/verify-email?token=TOKEN — verify account (EJS render)
-- POST /auth/forget-password — request reset email. Body: { email }
-- GET /auth/reset-password?token=TOKEN — render reset form (EJS)
-- POST /auth/change-password?token=TOKEN — change via reset token. Body: { password }
+
 Auth endpoints (public)
 
 - POST /auth/signup — register a user
@@ -173,6 +168,7 @@ Users endpoints (protected)
 - DELETE /user/:id — delete user
   - Auth: x-auth-token — Admin or the user themselves
 Use `psql` or your DB GUI to inspect created tables (`users`, `roles`, `permissions`, `rolepermissions`, ...).
+
 Roles (Admin)
 - POST /role — create role. Body: { name }
 - GET /role — list roles (includes permissions)
@@ -184,13 +180,6 @@ Role permissions
 - POST /role/:role_id/permissions — attach single permission. Body: { perm_id }
 - POST /role/:role_id/permissions/bulk — attach multiple. Body: { perm_ids: [1,2] }
 - DELETE /role/:role_id/permissions/:perm_id — remove permission
-Important models and relationships:
-- POST /profile — create profile (body validated)
-- GET /profile/me — get own profile (auth)
-- GET /profile/:id — get profile (role-check applies)
-- POST /profile/:id — update profile (role-check applies)
-- PUT /profile/:id/password — change password
-- POST /profile/:id/profile-picture — upload picture
 
 Profile endpoints
 - POST /profile — create profile (body validated)
@@ -199,12 +188,6 @@ Profile endpoints
 - POST /profile/:id — update profile (role-check applies)
 - PUT /profile/:id/password — change password for user (role-check applies)
 - POST /profile/:id/profile-picture — upload picture (multipart)
-- User
-- POST /team — create team
-- GET /team — list teams
-- GET /team/:team_id — get single team (team_view check)
-- PUT /team/:team_id — update team (team_update check)
-- DELETE /team/:team_id — delete team
 
 Team endpoints
 - POST /team — create team
@@ -212,9 +195,7 @@ Team endpoints
 - GET /team/:team_id — get single team (team_view permission check)
 - PUT /team/:team_id — update team (team_update permission check)
 - DELETE /team/:team_id — delete team (team_delete permission check)
-- Role
-Sign in (get token)
-- Permission
+
 ## Troubleshooting — quick (common problems)
 - RolePermission (join table)
 • DB connection failure — check `.env` variable `DB_STRING` and confirm Postgres instance is running.
