@@ -11,7 +11,7 @@ const updateTeamSchema = Joi.object({
 });
 
 const addMemberSchema = Joi.object({
-    user_id: Joi.string().uuid().required(),
+    email: Joi.string().email().required(),
     role_id: Joi.number().integer().min(1).required()
 });
 

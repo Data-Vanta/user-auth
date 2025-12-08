@@ -10,25 +10,27 @@ class TeamRepository {
   }
 
   async findAll() {
-    return await Team.findAll({
-      include: [{
-        model: User,
-        as: 'members',
-        attributes: ['id', 'name', 'email', 'isVerified', 'isAdmin', 'role', 'createdAt', 'updatedAt'],
-        through: { attributes: [] }
-      }]
-    });
+    const teams = await Team.findAll();
+    // Attach members with role details for each team
+    const results = [];
+    for (const t of teams) {
+      const members = await this.getTeamMembers(t.team_id);
+      const mappedMembers = members.map(m => ({ user: m.user, role: m.role }));
+      const teamPlain = t.get ? t.get({ plain: true }) : t;
+      teamPlain.members = mappedMembers;
+      results.push(teamPlain);
+    }
+    return results;
   }
 
   async findById(team_id) {
-    return await Team.findByPk(team_id, {
-      include: [{
-        model: User,
-        as: 'members',
-        attributes: ['id', 'name', 'email', 'isVerified', 'isAdmin', 'role', 'createdAt', 'updatedAt'],
-        through: { attributes: [] }
-      }]
-    });
+    const team = await Team.findByPk(team_id);
+    if (!team) return null;
+    const members = await this.getTeamMembers(team_id);
+    const mappedMembers = members.map(m => ({ user: m.user, role: m.role }));
+    const teamPlain = team.get ? team.get({ plain: true }) : team;
+    teamPlain.members = mappedMembers;
+    return teamPlain;
   }
 
   async updateById(team_id, updateData) {
@@ -67,7 +69,7 @@ class TeamRepository {
   }
 
   async getTeamMembers(team_id) {
-    return await TeamMember.findAll({
+    const members = await TeamMember.findAll({
       where: { team_id },
       include: [
         {
@@ -82,6 +84,8 @@ class TeamRepository {
         }
       ]
     });
+    // Return only user and role (omit team_id and other TeamMember fields)
+    return members.map(m => ({ user: m.user, role: m.role }));
   }
 
   async getUserTeams(user_id) {

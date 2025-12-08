@@ -48,17 +48,19 @@ class TeamService {
     return { message: "Team deleted successfully" };
   }
 
-  async addMemberToTeam(team_id, user_id, role_id) {
+  async addMemberToTeam(team_id, email, role_id) {
     const team = await this.teamRepository.findById(team_id);
 
     if (!team) {
       throw { statusCode: 404, message: "Team not found" };
     }
 
-    const targetUser = await this.userRepository.findById(user_id);
+    const targetUser = await this.userRepository.findByEmail(email);
     if (!targetUser) {
       throw { statusCode: 404, message: "User not found" };
     }
+
+    const user_id = targetUser.id;
 
     const isMember = await this.teamRepository.isUserInTeam(team_id, user_id);
     if (isMember) {
