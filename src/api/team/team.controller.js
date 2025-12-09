@@ -33,8 +33,8 @@ class TeamController {
 
     addMember = asyncFun(async (req, res) => {
         const { team_id } = req.params;
-        const { email, role_id } = req.body;
-        const member = await teamService.addMemberToTeam(team_id, email, role_id);
+        const { email, roleName } = req.body;
+        const member = await teamService.addMemberToTeam(team_id, email, roleName);
         return success(res, "Member added to team successfully", member, 201);
     });
 

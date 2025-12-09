@@ -59,7 +59,7 @@ class TeamService {
     return { message: "Team deleted successfully" };
   }
 
-  async addMemberToTeam(team_id, email, role_id) {
+  async addMemberToTeam(team_id, email, roleName) {
     const team = await this.teamRepository.findById(team_id);
 
     if (!team) {
@@ -78,7 +78,14 @@ class TeamService {
       throw { statusCode: 409, message: "User is already a member of this team" };
     }
 
-    return await this.teamRepository.addMember(team_id, user_id, role_id);
+    // Resolve role by name (frontend provides roleName). Create if missing.
+    const roleToUse = roleName || 'Viewer';
+    let role = await this.roleRepository.findByName(roleToUse);
+    if (!role) {
+      role = await this.roleRepository.create({ name: roleToUse });
+    }
+
+    return await this.teamRepository.addMember(team_id, user_id, role.role_id);
   }
 
   async removeMemberFromTeam(team_id, user_id) {
