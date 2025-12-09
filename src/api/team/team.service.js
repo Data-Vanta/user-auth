@@ -9,11 +9,22 @@ class TeamService {
     this.roleRepository = RoleRepository;
   }
 
-  async createTeam(teamData, created_by, ownerId) {
+  async createTeam(teamData, created_by, roleName) {
     const team = await this.teamRepository.create(teamData);
 
-    await this.teamRepository.addMember(team.team_id, created_by, ownerId);
-    
+    // Owner is the authenticated user who created the team
+    const ownerUserId = created_by;
+
+    // Determine role to use for the owner (frontend passes roleName as hidden input)
+    const roleToUse = roleName || 'Owner';
+    let ownerRole = await this.roleRepository.findByName(roleToUse);
+    if (!ownerRole) {
+      ownerRole = await this.roleRepository.create({ name: roleToUse });
+    }
+
+    // Add owner as a team member with the resolved role
+    await this.teamRepository.addMember(team.team_id, ownerUserId, ownerRole.role_id);
+
     return await this.teamRepository.findById(team.team_id);
   }
 

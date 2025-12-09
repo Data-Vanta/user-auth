@@ -10,7 +10,7 @@ const { createTeamSchema, updateTeamSchema, addMemberSchema, updateMemberRoleSch
 router.use(validateAuth);
 
 // Team Endpoints
-router.post("/:ownerId", validate(createTeamSchema), teamController.createTeam);
+router.post("/", validate(createTeamSchema), teamController.createTeam);
 router.get("/", teamController.getAllTeams);
 router.get("/:team_id", checkTeamPermission('team_view'), teamController.getTeamById);
 router.put("/:team_id", checkTeamPermission('team_update'), validate(updateTeamSchema), teamController.updateTeam);
