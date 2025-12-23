@@ -6,7 +6,8 @@ const teamService = new TeamService();
 
 class TeamController {
     createTeam = asyncFun(async (req, res) => {
-        const team = await teamService.createTeam(req.body, req.user.id);
+        const roleName = req.body.roleName;
+        const team = await teamService.createTeam(req.body, req.user.id, roleName);
         return success(res, "Team created successfully", team, 201);
     });
 
@@ -32,8 +33,8 @@ class TeamController {
 
     addMember = asyncFun(async (req, res) => {
         const { team_id } = req.params;
-        const { user_id, role_id } = req.body;
-        const member = await teamService.addMemberToTeam(team_id, user_id, role_id);
+        const { email, roleName } = req.body;
+        const member = await teamService.addMemberToTeam(team_id, email, roleName);
         return success(res, "Member added to team successfully", member, 201);
     });
 

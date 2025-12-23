@@ -12,11 +12,6 @@ async function seed() {
 
     const permissions = [
       'team_view',
-      'team_update',
-      'team_delete',
-      'member_add',
-      'member_role_update',
-      'member_remove',
     ];
 
     const createdPerms = [];
@@ -26,7 +21,7 @@ async function seed() {
     }
 
     // Create roles
-    const [ownerRole] = await Role.findOrCreate({ where: { name: 'Owner' } });
+    const [ownerRole] = await Role.findOrCreate({ where: { name: 'Viewer' } });
 
     // Assign all permissions to Admin
     await ownerRole.setPermissions(createdPerms);

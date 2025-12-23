@@ -9,12 +9,22 @@ class TeamService {
     this.roleRepository = RoleRepository;
   }
 
-  async createTeam(teamData, created_by) {
+  async createTeam(teamData, created_by, roleName) {
     const team = await this.teamRepository.create(teamData);
 
-    // Add creator as team member with default role (role_id = 1 for Owner)
-    await this.teamRepository.addMember(team.team_id, created_by, "Owner");
-    
+    // Owner is the authenticated user who created the team
+    const ownerUserId = created_by;
+
+    // Determine role to use for the owner (frontend passes roleName as hidden input)
+    const roleToUse = roleName || 'Owner';
+    let ownerRole = await this.roleRepository.findByName(roleToUse);
+    if (!ownerRole) {
+      ownerRole = await this.roleRepository.create({ name: roleToUse });
+    }
+
+    // Add owner as a team member with the resolved role
+    await this.teamRepository.addMember(team.team_id, ownerUserId, ownerRole.role_id);
+
     return await this.teamRepository.findById(team.team_id);
   }
 
@@ -49,24 +59,33 @@ class TeamService {
     return { message: "Team deleted successfully" };
   }
 
-  async addMemberToTeam(team_id, user_id, role_id) {
+  async addMemberToTeam(team_id, email, roleName) {
     const team = await this.teamRepository.findById(team_id);
 
     if (!team) {
       throw { statusCode: 404, message: "Team not found" };
     }
 
-    const targetUser = await this.userRepository.findById(user_id);
+    const targetUser = await this.userRepository.findByEmail(email);
     if (!targetUser) {
       throw { statusCode: 404, message: "User not found" };
     }
+
+    const user_id = targetUser.id;
 
     const isMember = await this.teamRepository.isUserInTeam(team_id, user_id);
     if (isMember) {
       throw { statusCode: 409, message: "User is already a member of this team" };
     }
 
-    return await this.teamRepository.addMember(team_id, user_id, role_id);
+    // Resolve role by name (frontend provides roleName). Create if missing.
+    const roleToUse = roleName || 'Viewer';
+    let role = await this.roleRepository.findByName(roleToUse);
+    if (!role) {
+      role = await this.roleRepository.create({ name: roleToUse });
+    }
+
+    return await this.teamRepository.addMember(team_id, user_id, role.role_id);
   }
 
   async removeMemberFromTeam(team_id, user_id) {

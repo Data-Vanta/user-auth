@@ -2,7 +2,8 @@ const Joi = require("joi");
 
 const createTeamSchema = Joi.object({
     name: Joi.string().min(2).max(100).required(),
-    description: Joi.string().max(500).optional()
+    description: Joi.string().max(500).optional(),
+    roleName: Joi.string().min(2).max(100).optional()
 });
 
 const updateTeamSchema = Joi.object({
@@ -11,8 +12,8 @@ const updateTeamSchema = Joi.object({
 });
 
 const addMemberSchema = Joi.object({
-    user_id: Joi.string().uuid().required(),
-    role_id: Joi.number().integer().min(1).required()
+    email: Joi.string().email().required(),
+    roleName: Joi.string().min(1).max(100).required()
 });
 
 const updateMemberRoleSchema = Joi.object({
