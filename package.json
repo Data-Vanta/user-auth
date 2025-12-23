@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "description": "User Authentication Service – A backend service for secure user authentication using JWT (JSON Web Tokens). Supports user signup, login, access token generation, refresh tokens for session renewal, and token validation for protected routes.",
   "main": "src/index.js",
-  "scripts": {
-    "start": "nodemon src/index.js",
-    "seed": "node src/seeds/seedRolesPermissions.js",
-    "check:associations": "node src/seeds/checkAssociations.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Data-Vanta/user-auth.git"
@@ -24,6 +18,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+    "dataframe": "^1.0.0",
     "dotenv": "^17.2.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
@@ -41,6 +36,19 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "supertest": "^6.3.3"
+  },
+  "scripts": {
+    "start": "nodemon src/index.js",
+    "seed": "node src/seeds/seedRolesPermissions.js",
+    "check:associations": "node src/seeds/checkAssociations.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:setup": "node scripts/setup-test-data.js",
+    "test:analyze": "node scripts/run-analyze.js",
+    "test:normalize": "node scripts/run-normalize.js",
+    "test:handle-missing": "node scripts/run-handle-missing.js",
+    "test:rollback": "node scripts/run-rollback.js",
+    "test:process:all": "node scripts/run-all-process-tests.js"
   }
 }
