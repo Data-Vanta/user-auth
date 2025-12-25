@@ -37,4 +37,9 @@ const User = sequelize.define('User', {
   timestamps: true
 });
 
+User.associate = function(models) {
+  // A User can have many Files
+  User.hasMany(models.File, { foreignKey: 'userId' });
+};
+
 module.exports = User;
